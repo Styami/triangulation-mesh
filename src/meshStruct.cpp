@@ -181,12 +181,13 @@ void MeshStruct::turn_around_point(const size_t indexVertex) {
 }
 
 
-int MeshStruct::nextFace(int currentFace, size_t aroundPoint) {
+int MeshStruct::nextFace(int currentFaceId, size_t aroundPoint) {
     int id = 0;
-    while (faces[currentFace].sommets[(id + 1) % 3] != aroundPoint) {
+    const Face& currentFace = faces[currentFaceId];
+    while (currentFace.sommets[(id + 1) % 3] != aroundPoint) {
         id++;
     }
-    return faces[currentFace].indexesOfFacePerVertex[id];
+    return currentFace.indexesOfFacePerVertex[id];
 }
 
 
@@ -281,7 +282,6 @@ void MeshStruct::addPoint(const indiceFace faceId, const Point& newVec) {
     sommets.push_back(Sommet(newVec));
     split3(faceId, sommets.size() - 1);
     numberOfEdge += 3;
-    turn_around_point(0);
 }
 
 void MeshStruct::split3(const indiceFace indiceFace, const indiceGlobalSommet vertexId) {
@@ -298,17 +298,16 @@ void MeshStruct::split3(const indiceFace indiceFace, const indiceGlobalSommet ve
     currentFace.indexesOfFacePerVertex[1] = faces.size();
     faces[neighbourFaces[1]].setNewOppositeVertexPoint(indiceFace, faces.size());
     currentFace.indexesOfFacePerVertex[2] = faces.size() + 1;
-    faces[neighbourFaces[1]].setNewOppositeVertexPoint(indiceFace, faces.size()+1);
+    faces[neighbourFaces[2]].setNewOppositeVertexPoint(indiceFace, faces.size()+1);
 
-    
-
-    Face newFace(vertexId, indexeVertexInFace[0], indexeVertexInFace[1]);
-    newFace.indexesOfFacePerVertex = {neighbourFaces[2], indiceFace, faces.size()+1};
+    Face newFace = Face(vertexId, indexeVertexInFace[2], indexeVertexInFace[0]);
+    newFace.indexesOfFacePerVertex = {neighbourFaces[1], faces.size() + 1, indiceFace};
     colorFace.push_back(Color());
     faces.push_back(newFace);
 
-    newFace = Face(vertexId, indexeVertexInFace[2], indexeVertexInFace[0]);
-    newFace.indexesOfFacePerVertex = {neighbourFaces[1], faces.size() - 1, indiceFace};
+    newFace = Face(vertexId, indexeVertexInFace[0], indexeVertexInFace[1]);
+    newFace.indexesOfFacePerVertex = {neighbourFaces[2], indiceFace, faces.size()-1};
     colorFace.push_back(Color());
     faces.push_back(newFace);
+
 }
