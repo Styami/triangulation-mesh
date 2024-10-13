@@ -35,7 +35,6 @@ inline pairIndiceFaceSommet getExistingEdge(const arete& edge, const std::map<ar
 MeshStruct::MeshStruct(const std::string& file_name) {
     std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
     Point p;
-    std::string line;
     std::ifstream myfile (file_name);
     int nbSommets;
     int nbFaces;
@@ -48,7 +47,6 @@ MeshStruct::MeshStruct(const std::string& file_name) {
         for(int i = 0; i < nbSommets; i++) {
             myfile >> p.x >> p.y >> p.z;
             sommets.push_back(p);
-            //poidsVertex.push_back(rand() % 100);
         }
         for (indiceFace currentFace = 0; currentFace < nbFaces; currentFace++) {
             int numberOfVertexPerFace = 0;
@@ -175,7 +173,6 @@ void MeshStruct::turn_around_point(const size_t indexVertex) {
 
     do {
         colorFace[currentFace] = Color(255, 0, 0);
-        std::vector<indiceGlobalSommet> LocalVertex = faces[currentFace].sommets;
         currentFace = nextFace(currentFace, indexVertex);
     }while (currentFace != firstFace);
 }
@@ -310,4 +307,71 @@ void MeshStruct::split3(const indiceFace indiceFace, const indiceGlobalSommet ve
     colorFace.push_back(Color());
     faces.push_back(newFace);
 
+}
+
+indiceFace MeshStruct::searchIncidentFace(const indiceGlobalSommet vertexId1, const indiceGlobalSommet vertexId2) {
+    unsigned int localId = 0;
+    indiceFace currentFaceId = sommets[vertexId1].getFaceIndex();
+    indiceGlobalSommet vertexOfCurrentFace = faces[currentFaceId].sommets[localId];
+    while(vertexOfCurrentFace != vertexId2) {
+        localId++;
+        if(localId % 3 == 0) {
+            currentFaceId = nextFace(currentFaceId, vertexId1);
+            Face tmp = faces[currentFaceId];
+        }
+        vertexOfCurrentFace = faces[currentFaceId].sommets[localId % 3];
+    }
+    return currentFaceId;
+}
+
+std::tuple<indiceFace, size_t> MeshStruct::specificIncidentFace(const indiceGlobalSommet vertexId1, const indiceGlobalSommet vertexId2, const indiceFace faceId) {
+    const Face& currentFace = faces[faceId];
+    size_t res;
+    for (size_t id = 0; id < 3; id++) {
+        if((currentFace.sommets[id] == vertexId1) && (currentFace.sommets[(id + 1) % 3] == vertexId2)) {
+            res = (id + 2) % 3;
+        } else {
+            res = (id + 1) % 3;
+        }
+    }
+    return {currentFace.indexesOfFacePerVertex[res], res};
+}
+
+void MeshStruct::edgeSplit(const indiceGlobalSommet& vertexId1, const indiceGlobalSommet& vertexId2, const float interpolateValue) {
+    Point newVertexCoor = sommets[vertexId1].getPoint() + (sommets[vertexId2].getPoint() - sommets[vertexId1].getPoint()) * interpolateValue;
+    sommets.push_back(newVertexCoor);
+    indiceFace face1 = searchIncidentFace(vertexId1, vertexId2);
+    sommets[sommets.size() - 1].setIndexeFace(face1);
+    auto [face2, oppositeOfFace2] = specificIncidentFace(vertexId1, vertexId2, face1);
+    auto [trash, oppositeOfFace1] = specificIncidentFace(vertexId1, vertexId2, face2);
+
+    //réorganisation des deux faces initiales
+    const std::vector<indiceFace> neighbourFaces1 = faces[face1].indexesOfFacePerVertex;
+    const std::vector<indiceGlobalSommet> vertexIdIncidentFace1 = faces[face1].sommets;
+    faces[face1].sommets[(oppositeOfFace2 + 2) % 3] = sommets.size() - 1;
+    sommets[vertexIdIncidentFace1[(oppositeOfFace2 + 2) % 3]].setIndexeFace(faces.size());
+    const std::vector<indiceFace> neighbourFaces2 = faces[face2].indexesOfFacePerVertex;
+    const std::vector<indiceGlobalSommet> vertexIdIncidentFace2 = faces[face2].sommets;
+    faces[face2].sommets[(oppositeOfFace1 + 1) % 3] = sommets.size() - 1;
+    sommets[vertexIdIncidentFace2[(oppositeOfFace1 + 1) % 3]].setIndexeFace(faces.size() + 1);
+
+
+    //Couture de la première nouvelle face
+    Face newFace(vertexIdIncidentFace1[oppositeOfFace2], sommets.size() - 1, vertexIdIncidentFace1[(oppositeOfFace2 + 2) % 3]);
+    newFace.indexesOfFacePerVertex = {faces.size() + 1, neighbourFaces1[(oppositeOfFace2+1) % 3], face1};
+    faces[neighbourFaces1[(oppositeOfFace2 + 1) % 3]].setNewOppositeVertexPoint(face1, faces.size());
+    faces[face1].indexesOfFacePerVertex[(oppositeOfFace2+1) % 3] = faces.size();
+    colorFace.push_back(Color());
+    faces.push_back(newFace);
+
+
+    //Couture de la seconde nouvelle face
+    newFace = Face(vertexIdIncidentFace2[oppositeOfFace1], vertexIdIncidentFace2[(oppositeOfFace1 + 1) % 3], sommets.size() - 1);
+    newFace.indexesOfFacePerVertex = {faces.size() - 1, face2, neighbourFaces2[(oppositeOfFace1 + 2) % 3]};
+    faces[neighbourFaces2[(oppositeOfFace1 + 2) % 3]].setNewOppositeVertexPoint(face2, faces.size());
+    faces[face2].indexesOfFacePerVertex[(oppositeOfFace1 + 2) % 3] = faces.size();
+    colorFace.push_back(Color());
+    faces.push_back(newFace);
+
+    numberOfEdge += 2;
 }
