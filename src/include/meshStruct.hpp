@@ -22,8 +22,8 @@ class MeshStruct {
 		bool inConvexHull(const Point& p) const;
 		friend std::ostream& operator<<(std::ostream& os, const MeshStruct& mesh);
 		void split3(const indiceFace indiceFace, const indiceGlobalSommet indiceVertex);
-		void edgeSplit(const indiceGlobalSommet& vertex1, const indiceGlobalSommet& vertex2, const float interpolateValue);
-		
+		void edgeSplit(const indiceGlobalSommet vertex1, const indiceGlobalSommet vertex2, const float interpolateValue);
+		void edgeFlip(const indiceGlobalSommet vertexId1, const indiceGlobalSommet vertexId2);
 
 	private:
 		Vecteur calculNormalTriangle(const Face& numFace) const;

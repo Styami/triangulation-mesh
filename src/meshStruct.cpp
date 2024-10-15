@@ -1,4 +1,6 @@
 #include "include/meshStruct.hpp"
+#include "include/face.hpp"
+#include "include/sommet.hpp"
 #include <cstddef>
 #include <iostream>
 #include <chrono>
@@ -337,7 +339,7 @@ std::tuple<indiceFace, size_t> MeshStruct::specificIncidentFace(const indiceGlob
     return {currentFace.indexesOfFacePerVertex[res], res};
 }
 
-void MeshStruct::edgeSplit(const indiceGlobalSommet& vertexId1, const indiceGlobalSommet& vertexId2, const float interpolateValue) {
+void MeshStruct::edgeSplit(const indiceGlobalSommet vertexId1, const indiceGlobalSommet vertexId2, const float interpolateValue) {
     Point newVertexCoor = sommets[vertexId1].getPoint() + (sommets[vertexId2].getPoint() - sommets[vertexId1].getPoint()) * interpolateValue;
     sommets.push_back(newVertexCoor);
     indiceFace face1 = searchIncidentFace(vertexId1, vertexId2);
@@ -374,4 +376,29 @@ void MeshStruct::edgeSplit(const indiceGlobalSommet& vertexId1, const indiceGlob
     faces.push_back(newFace);
 
     numberOfEdge += 2;
+}
+
+void MeshStruct::edgeFlip(const indiceGlobalSommet vertexId1, const indiceGlobalSommet vertexId2) {
+    indiceFace faceId1 = searchIncidentFace(vertexId1, vertexId2);
+    auto [faceId2, oppositeOfFace2] = specificIncidentFace(vertexId1, vertexId2, faceId1);
+    auto [trash, oppositeOfFace1] = specificIncidentFace(vertexId1, vertexId2, faceId2);
+
+    const std::vector<indiceFace> neighbourFaces1 = faces[faceId1].indexesOfFacePerVertex;
+    const std::vector<indiceGlobalSommet> vertexIdIncidentFace1 = faces[faceId1].sommets;
+    const std::vector<indiceFace> neighbourFaces2 = faces[faceId2].indexesOfFacePerVertex;
+    const std::vector<indiceGlobalSommet> vertexIdIncidentFace2 = faces[faceId2].sommets;
+
+    // couture du premier triangle
+    faces[faceId1].sommets[(oppositeOfFace2 + 2) % 3] = vertexIdIncidentFace2[oppositeOfFace1];
+    sommets[vertexIdIncidentFace1[(oppositeOfFace2 + 1)%3]].setIndexeFace(faceId1);
+    faces[faceId1].indexesOfFacePerVertex[oppositeOfFace2] = neighbourFaces2[(oppositeOfFace1 + 1) % 3];
+    faces[faceId1].indexesOfFacePerVertex[(oppositeOfFace2 + 1) % 3] = faceId2;
+    faces[neighbourFaces2[(oppositeOfFace1 + 1) % 3]].setNewOppositeVertexPoint(faceId2, faceId1);
+
+    // couture du second triangle
+    faces[faceId2].sommets[(oppositeOfFace1 + 2) % 3] = vertexIdIncidentFace1[oppositeOfFace2];
+    sommets[vertexIdIncidentFace2[(oppositeOfFace1 + 1)%3]].setIndexeFace(faceId2);
+    faces[faceId2].indexesOfFacePerVertex[oppositeOfFace1] = neighbourFaces1[(oppositeOfFace2 + 1) % 3];
+    faces[faceId2].indexesOfFacePerVertex[(oppositeOfFace1 + 1) % 3] = faceId2;
+    faces[neighbourFaces1[(oppositeOfFace2 + 1) % 3]].setNewOppositeVertexPoint(faceId1, faceId2);
 }
