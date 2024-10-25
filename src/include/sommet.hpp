@@ -10,6 +10,8 @@ typedef size_t indiceFace;
 class Sommet {
     public:
         Sommet(const Point& _p);
+        Sommet();
+        Sommet(const Point& _p, indiceFace i);
         void setIndexeFace(indiceFace i);
         indiceFace getFaceIndex() const;
         const Point& getPoint() const;
