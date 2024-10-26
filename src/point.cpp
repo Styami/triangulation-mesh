@@ -18,6 +18,10 @@ Point::Point(float a, float b, float c) :
     z(c)
 {}
 
+Point Point::operator/(const float f) {
+    return Point(x/f, y/f, z/f);
+}
+
 std::ostream& operator<<(std::ostream& os, const Point& point) {
     os << point.x << ' ' << point.y << ' ' << point.z;
     return os;

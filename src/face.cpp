@@ -16,12 +16,12 @@ Face::Face(const std::vector<indiceGlobalSommet>& _sommets) :
 {}
 
 Face::Face(const std::vector<indiceGlobalSommet>& _sommets, const std::vector<indexesFaceOppSommet> &_oppositeFaces) :
-    indexesOfFacePerVertex(_oppositeFaces),
+    neighboursFaces(_oppositeFaces),
     sommets(_sommets)
 {}
 
 void Face::setNewOppositeVertexPoint(const indiceFace previousOppFace, const indiceFace newOppFace) {
-    for (indiceFace& i : indexesOfFacePerVertex) {
+    for (indiceFace& i : neighboursFaces) {
         if(i == previousOppFace) {
             i = newOppFace;
             return;
@@ -29,7 +29,7 @@ void Face::setNewOppositeVertexPoint(const indiceFace previousOppFace, const ind
     }
 }
 
-const arete Face::getOppositeEdge() {
+const arete Face::OppositeEdgeFromInfiniteFace() {
     for(size_t i = 0; i < sommets.size(); i++) {
         if(sommets[i] == 0) return std::make_pair(sommets[(i + 1) % 3], sommets[(i + 2) % 3]);
     }

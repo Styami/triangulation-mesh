@@ -16,14 +16,14 @@ class Face {
         Face(const std::vector<indiceGlobalSommet>& _sommets);
         Face(const std::vector<indiceGlobalSommet>& _sommets, const std::vector<indexesFaceOppSommet> &_oppositeFaces);
         void setNewOppositeVertexPoint(const indiceFace previousOppFace, const indiceFace newOppFace);
-        std::vector<indexesFaceOppSommet> indexesOfFacePerVertex;
+        std::vector<indexesFaceOppSommet> neighboursFaces;
         std::vector<indiceGlobalSommet> sommets;
         /**
             Cette fonction permet de récupérer l'arrête opposée à notre sommet infini.
             /!\ Cette fonction est à utiliser uniquement pour les faces infinies.
             @return arete 
         */
-        const arete getOppositeEdge();
+        const arete OppositeEdgeFromInfiniteFace();
 
         /**
             Récupère la vertex opposée à l'arête passée en paramètre
