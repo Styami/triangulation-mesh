@@ -8,27 +8,19 @@
 void MeshOpened::loadMesh(const std::string& file_name) {
     std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
     std::ifstream myfile (file_name);
-    Point p1;
     Point p;
-    Point p3;
     int nbSommets;
     Sommet newVertex;
-    sommets.push_back(Sommet());
+    sommets.push_back(Sommet({0, 0, 0}));
     sommets[0].setIndexeFace(1);
 
     if(myfile.is_open()) {
-        //myfile.ignore(4);
         myfile >> nbSommets;
-        //myfile.ignore(1000, '\n');
-        myfile >> p.x >> p.y >> p.z;
-        sommets.push_back(p);
-        sommets[1].setIndexeFace(0);
-        myfile >> p.x >> p.y >> p.z;
-        sommets.push_back(p);
-        sommets[2].setIndexeFace(0);
-        myfile >> p.x >> p.y >> p.z;
-        sommets.push_back(p);
-        sommets[3].setIndexeFace(0);
+        for (int i = 1; i < 4; i ++) {
+            myfile >> p.x >> p.y >> p.z;
+            sommets.push_back(p);
+            sommets[i].setIndexeFace(0);
+        }
         if(orientationTest(sommets[1], sommets[2], sommets[3])) {
             faces.push_back({1, 2, 3});
             faces[0].neighboursFaces = {2, 1, 3};
@@ -66,11 +58,17 @@ void MeshOpened::loadMesh(const std::string& file_name) {
 }   
 
 void MeshOpened::cleanDataIfOpen() {
-    std::vector<bool> elementsToRemove(colorFace.size(), 0);
+    if(has_been_cleaned) 
+        return;
+    else
+        has_been_cleaned = true;
+    std::vector<bool> elementsToRemove(colorFace.size(), false);
     size_t indice = 0;
     // on enlève le sommet infini
-    std::vector<Sommet>::iterator it = sommets.begin();
-    sommets.erase(it);
+    std::vector<Sommet>::iterator its = sommets.begin();
+    sommets.erase(its);
+    std::vector<Vecteur>::iterator itn = normals.begin();
+    normals.erase(itn);
     // on cherche enlève toutes les faces infinies
     faces.erase(std::remove_if(faces.begin(), faces.end(), [&hint = indice, &etr = elementsToRemove](Face& f) {
         bool remove = false;
@@ -96,8 +94,8 @@ void MeshOpened::cleanDataIfOpen() {
 
 void MeshOpened::save_mesh_off(const std::string& file_name) {
     std::ofstream file(file_name + ".off");
-
     if(file.is_open()) {
+        std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
         file << "OFF\n";
         cleanDataIfOpen();
         file << sommets.size()  << ' ' << faces.size()  << ' ' << numberOfEdge << '\n';
@@ -115,6 +113,9 @@ void MeshOpened::save_mesh_off(const std::string& file_name) {
 
             file << '\n';
         }
+        std::cout << "temps du sauvegarde du mesh en .off: "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begin)
+        << std::endl;
     } else {
         std::cerr << "le fichier d'exportation n'est pas ouvert";
     }

@@ -52,6 +52,7 @@ class MeshOpened : public Mesh {
 		void edgeSplit(const arete& edge, const float interpolateValue);
 		void edgeFlip(const arete& edge);
 		void lawson(const indiceFace currentFaceId1,  const indiceFace currentFaceId2, const indiceFace currentFaceId3);
+        bool has_been_cleaned = false;
 };
 
 #endif

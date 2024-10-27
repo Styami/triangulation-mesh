@@ -62,6 +62,7 @@ void MeshClosed::loadMesh(const std::string& file_name) {
 }
 
 void MeshClosed::save_mesh_off(const std::string& file_name) {
+    std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
     std::ofstream file(file_name + ".off");
 
     if(file.is_open()) {
@@ -81,6 +82,9 @@ void MeshClosed::save_mesh_off(const std::string& file_name) {
 
             file << '\n';
         }
+        std::cout << "temps du sauvegarde du mesh en .off: "
+        << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begin)
+        << std::endl;
     } else {
         std::cerr << "le fichier d'exportation n'est pas ouvert";
     }
@@ -115,5 +119,7 @@ void MeshClosed::save_mesh_obj(const std::string& file_name) {
         std::cout << "temps du sauvegarde du mesh en .obj : "
         << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - begin)
         << std::endl;
+    } else {
+        std::cerr << "le fichier d'exportation n'est pas ouvert";
     }
 }
