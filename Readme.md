@@ -3,6 +3,7 @@
 Il suffit d'avoir meson.<br>
 ouvrir terminal et faire : 
 ```
+meson setup --reconfigure build
 meson compile -C build
 build/MainDebug
 ```
@@ -22,3 +23,53 @@ Nous obtenons ainsi cette image. On peut observer que certaines aspérités sont
 ## Courbure
 
 La courbure est calculée en à la suite de chaque laplacien mais elle est normalement pas affiché car je n'ai malheureusement pas trouvé de moyen pour l'afficher à l'aide d'une couleur via dans mes ``.obj``. Je comptais utiliser des coordonnées de texture qui seraient généré en fonction de ma valeur de courbure et la texture utilisée serait [celle-ci](data/heat.png).
+<br>
+<br>
+
+# TP 4
+
+Le but de ce TP consistait à importer un fichier ayant des informations sous formes de nuages de points afin de le trianguler en respectant la contrainte de delaunay.
+Cette contrainte implique que pour chaque triangle représentant notre mesh, chaque cercle circonscrit à un triangle ne contiendra qu'uniquement les points de dernier et aucun autre.
+
+## Fonctionnalité implémentées
+
+Pour réaliser ce TP, la classe ``MeshOpened`` qui hérite de la classe ``Mesh`` a été ajouté afin de pouvoir traiter les maiillages ouverts.
+Deux fonctionnalités primaires nous intéréssant ont été implémentées. La première est ``EdgeFlip(const arete&)`` qui permet de flip l'arête passée en paramètre.
+La seconde fonctionnalité est ``split3(const indiceFace indiceFace, const indiceGlobalSommet indiceVertex)`` permettant de diviser en trois le triangle auquel nous allons rajouter un point.
+La fonction ``Lawson`` permet de réaliser l'algorithme portant le même nom ce qui permet de concerver un maillage ayant des triangles de Delaunay.
+Enfin, toutes les fonctions citées sont utilisée dans la fonction d'ajout de point qui vérifie aussi si le nouveau point inséré est à l'intérieur de l'enveloppe convexe de notre maillage. La version naïve de l'algorithme vérifiant si un point est dans l'enveloppe convexe est utilisée dans ce code.
+Une autre fonctionnalité mineur a été implémenté. Cette fonction est ``void edgeSplit(const arete& edge, const float interpolateValue);`` qui permet simplement de diviser une arête en deux (``interpolateValue`` est une valeur entre 0 et 1 qui permet split plus ou moins proche d'un des deux points de l'arête, 0.5 représentant le milieu).
+
+## Mesures de temps sur les données des Alpes.
+
+
+|Données utilisées|temps de création du maillage (en secondes)|temps de calcul des normales (en millisecondes)|
+|:-----------------:|:-----------------------------------------:|:-------:|
+|noise_poisson|1.91|33|
+|noise_random_1|4.98|54|
+|noise_random_2|20.08|113|
+
+<br>
+<br>
+
+Malheureusement, Il n'a pas été possible de réaliser ces mesures de temps avec les données des fichiers ``alpes_poisson.txt`` et ``alpes_random_2.txt`` car lors de l'ajout des points, nous tombons dans un cas particulier où une arête se fait flip à l'infini.
+
+### Résultats
+
+![noise_poisson](data/Screenshot_noise_poisson.png)
+Noise poisson
+<br>
+<br>
+
+![noise_random_1](data/Screenshot_noise_random_1.png)
+Noise random 1
+<br>
+<br>
+
+![noise_random_2](data/Screenshot_noise_random_2.png)
+Noise random 2
+<br>
+<br>
+
+![noise_random_2 lissé](data/Screenshot_noise_random_2_lisse.png)
+Noise random 2 lissé. Le rendu est assez étrange.
